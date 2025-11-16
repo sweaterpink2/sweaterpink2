@@ -7,61 +7,80 @@
 
 <style>
   :root { --pink:#ffc0cb; --accent:#ff4d94; --green:#28a745; }
+
   body{
     font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
     background:#fff0f5;margin:0;padding:20px;
   }
+
   #password-box{
     background:var(--pink);padding:20px;border-radius:12px;text-align:center;
-    width:90%;max-width:420px;margin:20px auto;box-shadow:0 6px 14px rgba(0,0,0,0.12)
+    width:90%;max-width:420px;margin:20px auto;
+    box-shadow:0 6px 14px rgba(0,0,0,0.12);
   }
+
   #quote-box{
     display:none;background:var(--pink);color:#333;font-size:18px;margin:20px auto;
     text-align:center;padding:20px;border-radius:12px;width:90%;max-width:560px;
     box-shadow:0 6px 14px rgba(0,0,0,0.12);opacity:0;transition:opacity .8s ease-in;
-    overflow-wrap:anywhere
+    overflow-wrap:anywhere;
   }
+
   .btn{
-    background:var(--accent);color:#fff;border:none;padding:10px 18px;border-radius:8px;
-    cursor:pointer;font-weight:600
+    background:var(--accent);color:#fff;border:none;padding:10px 18px;
+    border-radius:8px;cursor:pointer;font-weight:600;
   }
   .btn-green{background:var(--green)}
-  .input-wrap{position:relative;width:82%;margin:0 auto 12px}
+
+  .input-wrap{
+    position:relative;width:82%;margin:0 auto 12px;
+  }
+
   input[type=password],input[type=text]{
     padding:10px 38px 10px 12px;background:#fff;border:none;border-radius:8px;
-    width:100%;box-sizing:border-box;color:#000;outline:none
+    width:100%;box-sizing:border-box;color:#000;outline:none;
   }
+
   .eye{
     position:absolute;right:8px;top:50%;transform:translateY(-50%);
-    cursor:pointer;font-size:16px;color:#555;background:transparent;border:none
+    cursor:pointer;font-size:16px;color:#555;background:transparent;border:none;
   }
-  #error-msg{color:#b00020;font-weight:bold;display:none;margin-top:12px}
+
+  #error-msg{
+    color:#b00020;font-weight:bold;display:none;margin-top:12px;
+  }
 </style>
 </head>
 
 <body>
 
-<!-- ========== LOGIN UI ========== -->
+<!-- ========== PASSWORD INPUT ========== -->
 <div id="password-box">
   <p style="color:#000;margin:0 0 12px;font-size:18px;">
     <b>Masukkan Password di video terbaru<br>(salam: sweater pink)</b>
   </p>
+
   <div class="input-wrap">
-    <input type="password" id="password-input" placeholder="Password..." 
+    <input type="password" id="password-input" placeholder="Password..."
            onkeydown="if(event.key==='Enter'){checkPassword();}">
     <button type="button" class="eye" onclick="togglePassword()" aria-label="Lihat Password">👁️</button>
   </div>
+
   <button class="btn" onclick="checkPassword()">Submit</button>
   <p id="error-msg"></p>
 </div>
 
-<!-- ========== KONTEN DEKRIPSI ========== -->
+<!-- ========== OUTPUT AFTER DECRYPT ========== -->
 <div id="quote-box"></div>
 
-<!-- ciphers.js hasil encrypt -->
+<!-- Memuat hasil enkripsi dari GitHub Actions -->
 <script src="ciphers.js?v=4"></script>
 
+
 <script>
+/* ============================
+   AES-GCM DECRYPT + PBKDF2
+   ============================ */
 const CIPHERS = (window.CIPHERS || []);
 
 function b64toBytes(b64){
@@ -91,53 +110,55 @@ async function tryDecryptWith(password){
       const key  = await deriveKey(password, salt, item.iters);
       const ct   = b64toBytes(item.data_b64);
       const plainBuf = await crypto.subtle.decrypt({name:"AES-GCM", iv}, key, ct);
-      const json = JSON.parse(new TextDecoder().decode(new Uint8Array(plainBuf)));
-      return json;
+      return JSON.parse(new TextDecoder().decode(new Uint8Array(plainBuf)));
     }catch(e){}
   }
   throw new Error("wrong_password_or_blob");
 }
 
+/* ============================
+   PASSWORD UI
+   ============================ */
 function togglePassword(){
   const input = document.getElementById("password-input");
   input.type = input.type === "password" ? "text" : "password";
 }
 
 async function checkPassword(){
-  const inputVal = document.getElementById("password-input").value.trim();
-  const errorMsg = document.getElementById("error-msg");
+  const val = document.getElementById("password-input").value.trim();
+  const err = document.getElementById("error-msg");
 
-  if(!inputVal){
-    errorMsg.textContent = "Password tidak boleh kosong.";
-    errorMsg.style.display = "block";
+  if(!val){
+    err.textContent = "Password tidak boleh kosong.";
+    err.style.display = "block";
     return;
   }
 
   try{
-    const data = await tryDecryptWith(inputVal);
+    const data = await tryDecryptWith(val);
     document.getElementById("password-box").style.display = "none";
     renderQuote(data);
   }catch(e){
     const url = "http://youtube.com/@sweaterpink2";
-    errorMsg.innerHTML =
+    err.innerHTML =
       'Password salah!!! cek video terbaru di sini ' +
-      '<a href="' + url + '" target="_blank" rel="noopener noreferrer" ' +
-      'style="text-decoration:underline; color:#0b5ed7;">link</a>.';
-    errorMsg.style.display = "block";
+      '<a href="'+url+'" target="_blank" style="text-decoration:underline;color:#0b5ed7;">link</a>.';
+    err.style.display = "block";
   }
 }
 
+/* ============================
+   RENDER KONTEN (USERNAME/PASS)
+   ============================ */
 function renderQuote({quotes, perhatianText, perhatianLink, downloadLink, groupLink}){
   const now = new Date();
   const day = now.getDate();
   const monthNames = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
-  const dateStr = day + " " + monthNames[now.getMonth()] + " " + now.getFullYear();
+  const dateStr = `${day} ${monthNames[now.getMonth()]} ${now.getFullYear()}`;
 
-  const rawQuote = quotes[Math.min(day,31)-1] || "";
-  const clean = String(rawQuote).replace(/^\d{1,2}:\s*/, "");
-  const parts = clean.split(":");
-  const username = parts[0] || "";
-  const password = parts[1] || "";
+  const raw = quotes[Math.min(day,31)-1] || "";
+  const clean = raw.replace(/^\d{1,2}:\s*/, "");
+  const [username, password] = clean.split(":");
 
   const box = document.getElementById("quote-box");
   box.innerHTML = `
@@ -172,21 +193,32 @@ function renderQuote({quotes, perhatianText, perhatianLink, downloadLink, groupL
   `;
 
   box.style.display = "block";
-  requestAnimationFrame(()=>{ box.style.opacity = 1; });
+  requestAnimationFrame(()=> box.style.opacity = 1);
+}
+
+/* ============================
+   COPY TEXT + AUTO-HIDE NOTIF
+   ============================ */
+function showCopy(){
+  const msg = document.getElementById("copy-msg");
+  msg.style.display = "block";
+
+  clearTimeout(window._copyTimer);
+  window._copyTimer = setTimeout(() => {
+    msg.style.display = "none";
+  }, 1800);
 }
 
 function copyUser(){
-  const text = document.getElementById("username-val").innerText;
-  navigator.clipboard.writeText(text).then(()=>{
-    document.getElementById("copy-msg").style.display="block";
-  });
+  navigator.clipboard.writeText(
+    document.getElementById("username-val").innerText
+  ).then(showCopy);
 }
 
 function copyPass(){
-  const text = document.getElementById("password-val").innerText;
-  navigator.clipboard.writeText(text).then(()=>{
-    document.getElementById("copy-msg").style.display="block";
-  });
+  navigator.clipboard.writeText(
+    document.getElementById("password-val").innerText
+  ).then(showCopy);
 }
 </script>
 
@@ -197,15 +229,10 @@ function copyPass(){
 <style>
   .marquee-box {
     background: linear-gradient(135deg, #ff4ac9, #ff74d9, #a259ff, #6ecbff);
-    color: white;
-    padding: 8px 12px;
-    font-size: 12px;
-    font-weight: 600;
-    border-radius: 25px;
-    margin: 15px auto 25px;
+    color:white;padding:8px 12px;font-size:12px;font-weight:600;
+    border-radius:25px;margin:15px auto 25px;
     box-shadow:0 6px 20px rgba(255,74,201,.25);
-    max-width:95%;
-    text-align:center;
+    max-width:95%;text-align:center;
   }
 </style>
 
