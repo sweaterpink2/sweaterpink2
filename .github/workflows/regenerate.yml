@@ -22,7 +22,7 @@ jobs:
       - name: Checkout private data repo
         uses: actions/checkout@v4
         with:
-          repository: sshserver0106-hub/data     # ganti kalau beda
+          repository: sweaterpink2/data     # ganti kalau beda
           token: ${{ secrets.DATA_TOKEN }}       # secret token di repo publik
           path: data
 
