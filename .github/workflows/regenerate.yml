@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: sweaterpink2/data     # ganti kalau beda
-          token: ${{ secrets.DATA_TOKEN }}       # secret token di repo publik
+          token: ${{ secrets.DATA }}       # secret token di repo publik
           path: data
 
       # 3) Setup Node.js
