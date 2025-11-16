@@ -33,8 +33,7 @@
 <!-- ========== KONTEN SETELAH DEKRIPSI ========== -->
 <div id="quote-box"></div>
 
-<!-- Muat hasil enkripsi (dibuat oleh Actions / tools/encrypt.js) -->
-<script src="ciphers.js?v=4"></script> <!-- workflow nanti otomatis ganti angka v -->
+<script src="ciphers.js?v=4"></script>
 
 <script>
 const CIPHERS = (window.CIPHERS || []);
@@ -81,16 +80,13 @@ function togglePassword(){
 async function checkPassword(){
   const inputVal = document.getElementById("password-input").value.trim();
   const errorMsg = document.getElementById("error-msg");
+
   if(!inputVal){
     errorMsg.textContent = "Password tidak boleh kosong.";
     errorMsg.style.display = "block";
     return;
   }
-  if(!CIPHERS.length){
-    errorMsg.textContent = "Data terenkripsi (ciphers.js) belum ada.";
-    errorMsg.style.display = "block";
-    return;
-  }
+
   try{
     const data = await tryDecryptWith(inputVal);
     document.getElementById("password-box").style.display = "none";
@@ -99,8 +95,7 @@ async function checkPassword(){
     const url = "http://youtube.com/@sweaterpink2";
     errorMsg.innerHTML =
       'Password salah!!! cek video terbaru di sini ' +
-      '<a href="' + url + '" target="_blank" rel="noopener noreferrer" ' +
-      'style="text-decoration:underline; color:#0b5ed7;">link</a>.';
+      '<a href="' + url + '" target="_blank" rel="noopener noreferrer" style="text-decoration:underline; color:#0b5ed7;">link</a>.';
     errorMsg.style.display = "block";
   }
 }
@@ -108,40 +103,50 @@ async function checkPassword(){
 function renderQuote({quotes, perhatianText, perhatianLink, downloadLink, groupLink}){
   const now = new Date();
   const day = now.getDate();
-  const monthNames = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
-  const dateStr = day + " " + monthNames[now.getMonth()] + " " + now.getFullYear();
-  const rawQuote = (quotes && quotes.length) ? quotes[Math.min(day,31)-1] : "";
-  const cleanQuote = String(rawQuote||"").replace(/^\d{1,2}:\s*/, "");
+  const rawQuote = quotes[Math.min(day,31)-1] || "";
+
+  const clean = String(rawQuote).replace(/^\d{1,2}:\s*/, "");
+  const parts = clean.split(":");
+  const username = parts[0] || "";
+  const password = parts[1] || "";
 
   const box = document.getElementById("quote-box");
   box.innerHTML =
-    "<b style='font-size:22px'>" + dateStr + "</b>" +
-    "<div style='background:#fff3cd;color:#856404;border:1px solid #ffeeba;padding:12px;border-radius:10px;margin:16px auto 12px;text-align:left;max-width:490px;'>" +
-      "<b style='display:block;margin-bottom:6px;'>⚠️Perhatian!!!</b>" +
-      "<span style='display:block;line-height:1.5;margin-bottom:6px;'>" + (perhatianText||"") + "</span>" +
-      "<a href='" + (perhatianLink||"#") + "' target='_blank' style='color:#d63384;font-weight:bold;text-decoration:underline;'>🔗 Panduan username:password</a>" +
+    "<b style='font-size:22px'>" + now.toLocaleDateString("id-ID") + "</b>" +
+    "<div style='background:#fff3cd;color:#856404;border:1px solid #ffeeba;padding:12px;border-radius:10px;margin:16px auto;text-align:left;max-width:490px;'>" +
+      "<b style='display:block;margin-bottom:6px;'>⚠️ Perhatian!!!</b>" +
+      "<span>" + perhatianText + "</span><br>" +
+      "<a href='" + perhatianLink + "' target='_blank' style='color:#d63384;font-weight:bold;text-decoration:underline;'>🔗 Panduan username:password</a>" +
     "</div>" +
-    "<span id='today-quote' style='display:block;margin-top:8px;font-style:italic;'>" + cleanQuote + "</span>" +
+
+    "<div style='text-align:left;font-size:20px;margin-top:10px;'>" +
+      "<b>Username:</b> <span id='username-val'>" + username + "</span><br>" +
+      "<b>Password:</b> <span id='password-val'>" + password + "</span>" +
+    "</div>" +
+
     "<div style='margin-top:18px;display:flex;flex-direction:column;align-items:center;gap:12px;'>" +
-      "<button class='btn' onclick='copyQuote()'>Salin</button>" +
-      "<p id='copy-msg' style='color:green;font-weight:bold;display:none;margin:0;'>✔ username:password berhasil disalin! silakan tempel di http injector</p>" +
-      "<a href='" + (downloadLink||"#") + "' target='_blank' class='btn'>⬇ Download Config</a>" +
-      "<a href='" + (groupLink||"#") + "' target='_blank' class='btn btn-green'>👥 Join Grup Komunitas</a>" +
+      "<button class='btn' onclick='copyUser()'>Salin Username</button>" +
+      "<button class='btn' onclick='copyPass()'>Salin Password</button>" +
+      "<p id='copy-msg' style='color:green;font-weight:bold;display:none;margin:0;'>✔ berhasil disalin!</p>" +
+      "<a href='" + downloadLink + "' target='_blank' class='btn'>⬇ Download Config</a>" +
+      "<a href='" + groupLink + "' target='_blank' class='btn btn-green'>👥 Join Grup Komunitas</a>" +
     "</div>";
+
   box.style.display = "block";
   requestAnimationFrame(()=>{ box.style.opacity = 1; });
 }
 
-function copyQuote(){
-  const text = document.getElementById("today-quote").innerText;
-  navigator.clipboard.writeText(text).then(()=>{
-    document.getElementById("copy-msg").style.display = "block";
-  }).catch(()=>alert("Gagal menyalin. Silakan salin manual."));
+function copyUser(){
+  const text = document.getElementById("username-val").innerText;
+  navigator.clipboard.writeText(text).then(()=>document.getElementById("copy-msg").style.display="block");
 }
 
-window.checkPassword  = checkPassword;
-window.togglePassword = togglePassword;
+function copyPass(){
+  const text = document.getElementById("password-val").innerText;
+  navigator.clipboard.writeText(text).then(()=>document.getElementById("copy-msg").style.display="block");
+}
 </script>
+
 </body>
 </html>
 
@@ -159,32 +164,9 @@ window.togglePassword = togglePassword;
     max-width: 95%;
     text-align: center;
     letter-spacing: 0.3px;
-    animation: glow 3s ease-in-out infinite alternate;
-  }
-
-  @keyframes glow {
-    from { box-shadow: 0 0 10px rgba(255, 74, 201, 0.3); }
-    to { box-shadow: 0 0 25px rgba(255, 74, 201, 0.6); }
-  }
-
-  .marquee-box marquee {
-    font-family: 'Poppins', sans-serif;
-    font-weight: 500;
-    text-transform: none; /* huruf normal */
-    white-space: nowrap;
-    animation: textFade 6s ease-in-out infinite alternate;
-  }
-
-  @keyframes textFade {
-    from { opacity: 0.9; }
-    to { opacity: 1; }
   }
 </style>
 
 <div class="marquee-box">
-  <marquee>✅ Ready Config Premium • Aktif 30–60 Hari Bisa Request 1 Tahun  • Dipercaya 1.890 Pelanggan • 4.500+ Transaksi • Harga Termurah • Cs Respon 24 Jam Nonstop ✅</marquee>
+  <marquee>✅ Ready Config Premium • Aktif 30–60 Hari • Dipercaya 1.890 Pelanggan • Respon Cepat! ✅</marquee>
 </div>
-
-
-
-
