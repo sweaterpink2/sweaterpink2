@@ -25,7 +25,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: sweaterpink2/data
-          token: ${{ secrets.DATA }}
+          token: ${{ secrets.DATA_TOKEN }}
           path: data
 
       # 3) Setup Node.js
